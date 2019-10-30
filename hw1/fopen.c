@@ -7,7 +7,8 @@
 
 int main(int argc, char *argv[]){
 
-    
+    FILE *fp;
+    fp = fopen("output.txt", "w");
 
     return 0;
 }

@@ -7,7 +7,9 @@
 
 int main(int argc, char *argv[]){
 
-    
+    char line[10], good[10], haha[10];
+    scanf("%s %s %s", line, good, haha);
+    printf("%s %s %s\n", line, good, haha);
 
     return 0;
 }
