@@ -109,7 +109,7 @@ int main(int argc, char *argv[]){
     int Number_Of_Origins, Number_Of_Finals;    //  算出調整後的長度分別多少
     int *Adjust_Origin, *Adjust_Final;  //  事後把讀進來的做順序調整
     int cnt, idx;   //  迴圈控制用的變數
-    int *Output_Array, **Update_Rules;
+    int *Output_Array, **Update_Rules, **Outputs;
     int *Last_Print;
     Last_Print = (int *)malloc(sizeof(int) * Number_Of_Nodes);
     /* Input_File = fopen("input1.txt", "r"); */
@@ -117,6 +117,7 @@ int main(int argc, char *argv[]){
     /* Input_File = fopen("input3.txt", "r"); */
     Input_File = fopen("./hw2_test_file/input.txt", "r");
     Output_File = fopen("Output.txt", "r");
+    Outputs = (int **)malloc(sizeof(int *) * 20);
 
     //  做初始化
     Initialize(Input_File, &Origin, &Final, &Number_Of_Nodes, &Output_Array);
@@ -153,10 +154,13 @@ int main(int argc, char *argv[]){
     Output_Array = (int *)malloc(sizeof(int) * Number_Of_Nodes);
     memcpy(Output_Array, Origin, Number_Of_Nodes * sizeof(int));
 
+    *(Outputs+Rounds) = (int *)malloc(sizeof(int) * Number_Of_Nodes);
     for(cnt=0; cnt<Number_Of_Nodes; cnt++){
-        printf("%d ", Origin[cnt]);
+        (*(Outputs+Rounds))[cnt] = Origin[cnt];
+        /* printf("%d ", Origin[cnt]); */
     }
-    printf("//  Round %d\n", ++Rounds);
+    /* printf("\n"); */
+    ++Rounds;
     /* for(int k=0; k<Number_Of_Nodes; k++) */
     /*     printf("%d ", Output_Array[k]); */
     /* printf("\n"); */
@@ -281,11 +285,13 @@ int main(int argc, char *argv[]){
     }
     //  印出0th round的結果
     /* printf("0th Round\n"); */
+    *(Outputs+Rounds) = (int *)malloc(sizeof(int) * Number_Of_Nodes);
     for(int k=0; k<Number_Of_Nodes; k++){
-        printf("%d ", *(Output_Array+k));
+        (*(Outputs+Rounds))[k] = *(Output_Array+k);
+        /* printf("%d ", *(Output_Array+k)); */
     }
-    printf("//  Round %d\n", ++Rounds);
-
+    /* printf("\n"); */
+    ++Rounds;
 
     //  奇數回合，先用一層for把最大值掃出來，拿到最大值之後，再用一層for，再進
     //  去爬一次，把那些最大值的Rule擺進一個新的陣列，之後再進去這些都是最長路
@@ -361,12 +367,13 @@ int main(int argc, char *argv[]){
     Odd_Round_Update = (int **)malloc(sizeof(int *) * Rules_Cnt);
     Even_Round_Update = (int **)malloc(sizeof(int *) * Rules_Cnt);
     /* printf("%d\n", MAX); */
+
     while(Rules_Cnt != 0){
         /* printf("Round_Cnt = %d\n", Round_Cnt); */
         
         //  Odd_Round :
         if(Round_Cnt % 2 == 1){
-            //  Step 1
+        //  Step 1
             for(cnt=0; cnt<Rules_Cnt; cnt++){
                 if(*(Update_Rules+cnt) == NULL){
                     continue;
@@ -386,7 +393,7 @@ int main(int argc, char *argv[]){
                     MAX_Cnt++;
                 }
             }
-            /* printf("MAX_Cnt = %d\n", MAX_Cnt); */
+                /* printf("MAX_Cnt = %d\n", MAX_Cnt); */
             //  Step 3
             int MIN = *Update_Rules[0];
             for(cnt=0; cnt<Rules_Cnt; cnt++){
@@ -461,10 +468,13 @@ int main(int argc, char *argv[]){
             //  Step 6
             memcpy(Last_Print, Output_Array, sizeof(int) * Number_Of_Nodes);
             /* printf("Odd_Round Step 6 print\n"); */
+            *(Outputs+Rounds) = (int *)malloc(sizeof(int) * Number_Of_Nodes);
             for(cnt=0; cnt<Number_Of_Nodes; cnt++){
-                printf("%d ", Output_Array[cnt]);
+                (*(Outputs+Rounds))[cnt] = Output_Array[cnt];
+                /* printf("%d ", Output_Array[cnt]); */
             }
-            printf("//  Round %d\n", ++Rounds);
+            /* printf("\n"); */
+            ++Rounds;
             Round_Cnt++;
             continue;
         }
@@ -483,10 +493,13 @@ int main(int argc, char *argv[]){
             for(idx=0;idx<Number_Of_Nodes; idx++){
                 if(Last_Print[idx] != Output_Array[idx]){
                     /* printf("Even_Round Step 1\n"); */
+                    *(Outputs+Rounds) = (int *)malloc(sizeof(int) * Number_Of_Nodes);
                     for(cnt=0; cnt<Number_Of_Nodes; cnt++){
-                        printf("%d ", Output_Array[cnt]);
+                        (*(Outputs+Rounds))[cnt] = Output_Array[cnt];
+                        /* printf("%d ", Output_Array[cnt]); */
                     }
-                    printf("//  Round %d\n", ++Rounds);
+                    /* printf("\n"); */ 
+                    ++Rounds;
                     memcpy(Last_Print, Output_Array, sizeof(int) * Number_Of_Nodes);
                 }
             }
@@ -519,10 +532,13 @@ int main(int argc, char *argv[]){
                 for(idx=0;idx<Number_Of_Nodes; idx++){
                     if(Last_Print[idx] != Output_Array[idx]){
                         /* printf("Even_Round Step 2\n"); */
+                        *(Outputs+Rounds) = (int *)malloc(sizeof(int) * Number_Of_Nodes);
                         for(cnt=0; cnt<Number_Of_Nodes; cnt++){
-                            printf("%d ", Output_Array[cnt]);
+                            (*(Outputs+Rounds))[cnt] = Output_Array[cnt];
+                            /* printf("%d ", Output_Array[cnt]); */
                         }
-                        printf("//  Round %d\n", ++Rounds);
+                        /* printf("\n"); */
+                        ++Rounds;
                         memcpy(Last_Print, Output_Array, sizeof(int) * Number_Of_Nodes);
                         break;
                     }
@@ -567,18 +583,31 @@ int main(int argc, char *argv[]){
 
 
             //  Step 5
+            *(Outputs+Rounds) = (int *)malloc(sizeof(int) * Number_Of_Nodes);
             for(cnt=0; cnt<Number_Of_Nodes; cnt++){
-                printf("%d ", Output_Array[cnt]);
+                (*(Outputs+Rounds))[cnt] = Output_Array[cnt];
+                /* printf("%d ", Output_Array[cnt]); */
             }
-            printf("//  Round %d\n", ++Rounds);
+            /* printf("\n"); */ 
+            ++Rounds;
             Round_Cnt++;
         }
     }
     /* printf("Last\n"); */
+    *(Outputs+Rounds) = (int *)malloc(sizeof(int) * Number_Of_Nodes);
     for(cnt=0; cnt<Number_Of_Nodes; cnt++){
-        printf("%d ", Final[cnt]);
+        (*(Outputs+Rounds))[cnt] = Final[cnt];
+        /* printf("%d ", Final[cnt]); */
     }
-    printf("//  Round %d\n", ++Rounds);
+    /* printf("\n"); */
+    ++Rounds;
+    printf("%d\n", Rounds);
+    for(cnt=0; cnt<Rounds; cnt++){
+        for(idx=0; idx<Number_Of_Nodes; idx++){
+            printf("%d ", (*(Outputs+cnt))[idx]);
+        }
+        printf("\n");
+    }
     /* printf("Even_Round_Cnt = %d\n", Even_Round_Cnt); */
     /* for(int k=0; k<Even_Round_Cnt; k++){ */
     /*     for(int j=0; j<3; j++) */

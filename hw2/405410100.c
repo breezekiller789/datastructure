@@ -111,13 +111,15 @@ int main(int argc, char *argv[]){
     int cnt, idx;   //  迴圈控制用的變數
     int *Output_Array, **Update_Rules, **Outputs;
     int *Last_Print;
+    int *Logic_Map;
     Last_Print = (int *)malloc(sizeof(int) * Number_Of_Nodes);
     /* Input_File = fopen("input1.txt", "r"); */
     /* Input_File = fopen("input2.txt", "r"); */
     /* Input_File = fopen("input3.txt", "r"); */
     Input_File = fopen("./hw2_test_file/input.txt", "r");
     Output_File = fopen("Output.txt", "r");
-    Outputs = (int **)malloc(sizeof(int *) * 20);
+    Outputs = (int **)malloc(sizeof(int *) * 100);
+    Logic_Map = (int *)malloc(sizeof(int) * Number_Of_Nodes);
 
     //  做初始化
     Initialize(Input_File, &Origin, &Final, &Number_Of_Nodes, &Output_Array);
@@ -293,6 +295,57 @@ int main(int argc, char *argv[]){
     /* printf("\n"); */
     ++Rounds;
 
+    //  建立邏輯圖。
+    int Logic_Map_Cnt=0;
+    cnt = 0;
+    for(int i=0; i<Number_Of_Nodes; i++){
+        for(int k=0; k<Number_Of_Finals; k++){
+            /* printf("%d\t%d\n", Adjust_Origin[i], Adjust_Final[k]); */
+            if(Adjust_Origin[i] == Adjust_Final[k]){
+                Logic_Map[cnt++] = Adjust_Origin[i];
+                /* printf("%d\n", Logic_Map[cnt++]); */
+            }
+        }
+    }
+    Logic_Map_Cnt = cnt;
+
+    //  依照邏輯圖來算路徑長度
+    int Length=0;
+    end = start = -1;
+    for(int i=0; i<Rules_Cnt; i++){
+        for(int k=0; k<Logic_Map_Cnt; k++){
+            if(start != -1 && end != -1){
+                break;
+            }
+            /* printf("%d %d %d\n", (*(Update_Rules+i))[0], (*(Update_Rules+i))[1], Logic_Map[k]); */
+            if((*(Update_Rules+i))[0] == Logic_Map[k]){
+                start = k;
+            }
+            else if((*(Update_Rules+i))[1] == Logic_Map[k]){
+                end = k;
+            }
+        }
+            Length = end - start - 1;
+            /* printf("end = %d, start = %d\n", end, start); */
+        if(Length < 0){
+            Length = end - start + 1;
+        }
+            end = start = -1;
+            (*(Update_Rules+i))[2] = Length;
+            /* printf("%d\n", Length); */
+    }
+    /* for(int i=0; i<Rules_Cnt; i++){ */
+    /*     for(int k=0; k<3; k++){ */
+    /*         printf("%d ", (*(Update_Rules+i))[k]); */
+    /*     } */
+    /*     printf("\n"); */
+    /* } */
+
+
+
+
+
+
     //  奇數回合，先用一層for把最大值掃出來，拿到最大值之後，再用一層for，再進
     //  去爬一次，把那些最大值的Rule擺進一個新的陣列，之後再進去這些都是最長路
     //  徑的Rule裡面，找出source是最小的，這一個Rule是肯定要在這一round更新的，
@@ -368,7 +421,7 @@ int main(int argc, char *argv[]){
     Even_Round_Update = (int **)malloc(sizeof(int *) * Rules_Cnt);
     /* printf("%d\n", MAX); */
 
-    while(Rules_Cnt != 0){
+    while(1){
         /* printf("Round_Cnt = %d\n", Round_Cnt); */
         
         //  Odd_Round :
@@ -414,25 +467,41 @@ int main(int argc, char *argv[]){
             /* printf("\n"); */
             //  Step 4
             int Length;
-            for(int j=0; j<Number_Of_Origins; j++){
-                if(Adjust_Origin[j] == (*Odd_Round_Update)[0]){
+            int **Detect_OverLab, Detect_OverLab_Cnt=0;
+            Detect_OverLab = (int **)malloc(sizeof(int *) * Rules_Cnt);
+            for(int j=0; j<Logic_Map_Cnt; j++){
+                if(Logic_Map[j] == (*Odd_Round_Update)[0]){
                     for(cnt=0; cnt<Rules_Cnt; cnt++){
                         //  如果是Odd_Round_Update，就continue
                         if(*(Update_Rules+cnt) == NULL){
                             continue;
                         }
-                        //  長度是負的，代表往回走，也是continue
+                        //  長度是負的，要看他有沒有可以更新的，往回走有可能是
+                        //  可以在偶數回合更新。
                         else if((*(Update_Rules+cnt))[2] < 0){
+                            Src = (*(Update_Rules+cnt))[0];
+                            Dst = (*(Update_Rules+cnt))[1];
+                            /* printf("Src = %d, Dst = %d\n", Src, Dst); */
+                            Length = (*Odd_Round_Update)[2];
+                            for(idx=0; idx<Length; idx++){
+                                if(Logic_Map[idx] == Src){
+                                    *(Even_Round_Update+Even_Round_Cnt) = (int *)malloc(sizeof(int) * 3);
+                                    memcpy(*(Even_Round_Update+Even_Round_Cnt), *(Update_Rules+cnt), sizeof(int) * 3);
+                                    Even_Round_Cnt++;
+                                    *(Update_Rules+cnt) = NULL;
+                                    break;
+                                }
+                            }
                             continue;
                         }
                         else{
                             /* sleep(3); */
                             Src = (*(Update_Rules+cnt))[0];
                             Dst = (*(Update_Rules+cnt))[1];
-                            /* printf("Src = %d, Dst = %d\n", Src, Dst); */
-                            Length = (*Odd_Round_Update)[2];
+                            /* printf("Src = %d, Dst = %d \t%d\n", Src, Dst, Odd_Round_Cnt); */
+                            Length = (*Odd_Round_Update)[2] + 1;
                             for(idx=0; idx<Length; idx++){
-                                if(Adjust_Origin[idx] == Src){
+                                if(Logic_Map[idx] == Src){
                                     *(Even_Round_Update+Even_Round_Cnt) = (int *)malloc(sizeof(int) * 3);
                                     memcpy(*(Even_Round_Update+Even_Round_Cnt), *(Update_Rules+cnt), sizeof(int) * 3);
                                     Even_Round_Cnt++;
@@ -445,6 +514,8 @@ int main(int argc, char *argv[]){
                             /* printf("Length = %d, idx = %d, cnt = %d\n", Length, idx, cnt); */
                             /* printf("%d\n", (*(Update_Rules+cnt))[0]); */
                             if(idx == Length){
+                                /* *(Detect_OverLab+Detect_OverLab_Cnt) = (int *)malloc(sizeof(int) * 3); */
+                                /* Detect_OverLab_Cnt++; */
                                 *(Odd_Round_Update+Odd_Round_Cnt) = (int *)malloc(sizeof(int) * 3);
                                 memcpy(*(Odd_Round_Update+Odd_Round_Cnt), *(Update_Rules+cnt), sizeof(int) * 3);
                                 Odd_Round_Cnt++;
@@ -455,6 +526,25 @@ int main(int argc, char *argv[]){
                     }
                 }
             }
+            /* printf("%d\n", Detect_OverLab_Cnt); */
+            //  會進去這個if就要繼續檢查有沒有OverLab。
+            /* MAX = 0; */
+            /* if(Detect_OverLab_Cnt != 0){ */
+            /*     while(1){ */
+            /*         for(int cnt=0; cnt<Detect_OverLab_Cnt; cnt++){ */
+            /*             if((*(Detect_OverLab+cnt))[2] > MAX){ */
+            /*                 MAX = (*(Detect_OverLab+cnt))[2]; */
+            /*             } */
+            /*         } */
+
+            /*     } */
+            /* } */
+            /* for(int i=0; i<Odd_Round_Cnt; i++){ */
+            /*     for(int k=0; k<3; k++){ */
+            /*         printf("%d ", (*(Odd_Round_Update+i))[k]); */
+            /*     } */
+            /*     printf("\n"); */
+            /* } */
             //  Step 5
             for(cnt=0; cnt<Odd_Round_Cnt; cnt++){
                 Src = (*(Odd_Round_Update+cnt))[0];

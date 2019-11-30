@@ -46,7 +46,7 @@ int getword(char *Flow_Src, char *Flow_Dst, char *Rule_Src, char *Rule_Dst
         , char *line, char *Rules, char *port){
     /* printf("line = %s\n", line); */
     /* printf("word = %s\n", Rules); */
-    char *ptr, *qtr, *itr;
+    char *ptr, *qtr;
 
     //  拿到Rule的source IP
     ptr = Rules;
@@ -112,15 +112,17 @@ int getword(char *Flow_Src, char *Flow_Dst, char *Rule_Src, char *Rule_Dst
 int main(int argc, char *argv[]){
     
     char **Rules;
-    char *line, *ptr, Rule_Flag[2] = "0";
+    char *line, Rule_Flag[2] = "0";
     char *Flow_Src, *Flow_Dst, *Rule_Src, *Rule_Dst, *port;
     int offset = 0, N_Rules = 0, N_Follows = 0, idx=0;
+    /* int good; */
     FILE *Input_File, *Output_File;
     Input_File = fopen("input.txt", "r");
     Output_File = fopen("output.txt", "w");
     Rules = (char **)malloc(sizeof(char *) * MaxLine);
     line = (char *)malloc(sizeof(char) * MaxLine);
-    fgets(line, MaxLine, Input_File);
+    /* fscanf(Input_File, "%d", &N_Rules); */
+    line = fgets(line, MaxLine, Input_File);
     N_Rules = atoi(line);
 
 
@@ -143,6 +145,7 @@ int main(int argc, char *argv[]){
     /* printf("%s\n", line); */
     /* fgets(line, MaxLine, Input_File); */
     N_Follows = atoi(line);
+    printf("%d\n", N_Follows);
     fprintf(Output_File, "%d\n", N_Follows);
     while(fgets(line, MaxLine, Input_File) != NULL){
         if(idx == N_Follows){
@@ -172,6 +175,8 @@ int main(int argc, char *argv[]){
                     //  輸出port
                     /* printf("%s %s %s\n", Flow_Src */
                     /*         , Flow_Dst, port); */
+                    printf("%s %s %s\n", Flow_Src, Flow_Dst
+                            , port);
                     fprintf(Output_File, "%s %s %s\n", Flow_Src, Flow_Dst
                             , port);
                     break;
@@ -182,6 +187,8 @@ int main(int argc, char *argv[]){
                     /* printf("%s %s %s\n", Flow_Src */
                     /*         , Flow_Dst, port); */
                     fprintf(Output_File, "%s %s %s\n", Flow_Src, Flow_Dst
+                            , port);
+                    printf("%s %s %s\n", Flow_Src, Flow_Dst
                             , port);
                     break;
                 }
@@ -196,6 +203,7 @@ int main(int argc, char *argv[]){
                         /* printf("%s %s drop\t\n", Flow_Src */
                         /*         , Flow_Dst); */
                         fprintf(Output_File, "%s %s drop\n", Flow_Src, Flow_Dst);
+                        printf("%s %s drop\n", Flow_Src, Flow_Dst);
                         break;
                     }
                     else
@@ -209,6 +217,8 @@ int main(int argc, char *argv[]){
                     //  don't care，輸出port
                     /* printf("%s %s %s\n", Flow_Src */
                     /*         , Flow_Dst, port); */
+                    printf("%s %s %s\n", Flow_Src, Flow_Dst
+                            , port);
                     fprintf(Output_File, "%s %s %s\n", Flow_Src, Flow_Dst
                             , port);
                     break;
@@ -221,6 +231,7 @@ int main(int argc, char *argv[]){
                         /* printf("%s %s drop\n", Flow_Src */
                         /*         , Flow_Dst); */
                         fprintf(Output_File, "%s %s drop\n", Flow_Src, Flow_Dst);
+                        printf("%s %s drop\n", Flow_Src, Flow_Dst);
                         break;
                     }
                     else
@@ -282,12 +293,15 @@ int main(int argc, char *argv[]){
                     /*         , Flow_Dst, port); */
                     fprintf(Output_File, "%s %s %s\n", Flow_Src, Flow_Dst
                             , port);
+                    printf("%s %s %s\n", Flow_Src, Flow_Dst
+                            , port);
                     break;
                 }
                 else if(i == offset-1){
                     /* printf("%s %s drop\t\n", Flow_Src */
                     /*         , Flow_Dst); */
                     fprintf(Output_File, "%s %s drop\n", Flow_Src, Flow_Dst);
+                    printf("%s %s drop\n", Flow_Src, Flow_Dst);
                     break;
                 }
                 else
