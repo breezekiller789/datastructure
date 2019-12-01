@@ -61,15 +61,20 @@ void printPath(int parent[], int j, int ***Shortest_Path, int cnt){
 // the constructed distance 
 // array 
 void printSolution(int dist[], int n, int parent[], int src, int Num_Nodes,
-        int ***Shortest_Path){
+        int ***Shortest_Path, int *Hops){
     /* int src = 0; */ 
     static int cnt=0;
+    static int Hop_Cnt=0;
     /* printf("Vertex\t\t Distance\tPath"); */ 
     for (int i = 0; i < Num_Nodes; i++){
         Shortest_Path_Cnt = 0;
+        Hops[Hop_Cnt++] = dist[i];
         /* printf("\ncnt = %d", cnt); */
         /* printf("\n%d -> %d \t\t %d\t\t%d ", src, i, dist[i], src); */ 
         *((*Shortest_Path)+cnt) = (int *)malloc(sizeof(int) * Num_Nodes);
+        for(int j=0; j<Num_Nodes; j++){
+            (*((*Shortest_Path)+cnt))[j] = -1;
+        }
         (*((*Shortest_Path)+cnt))[Shortest_Path_Cnt++] = src;
         printPath(parent, i, Shortest_Path, cnt); 
         cnt++;
@@ -81,7 +86,8 @@ void printSolution(int dist[], int n, int parent[], int src, int Num_Nodes,
 // single source shortest path 
 // algorithm for a graph represented 
 // using adjacency matrix representation 
-void dijkstra(int **graph, int src, int Num_Nodes, int ***Shortest_Path){
+void dijkstra(int **graph, int src, int Num_Nodes, int ***Shortest_Path
+        , int *Hops){
       
     // The output array. dist[i] 
     // will hold the shortest 
@@ -152,7 +158,7 @@ void dijkstra(int **graph, int src, int Num_Nodes, int ***Shortest_Path){
   
     // print the constructed 
     // distance array 
-    printSolution(dist, Num_Nodes, parent, src, Num_Nodes, Shortest_Path);
+    printSolution(dist, Num_Nodes, parent, src, Num_Nodes, Shortest_Path, Hops);
 } 
 
 void Parse_Input(int ***Logic_Map, int ***Inputs, int *Num_Nodes, int *Num_Edges, int *Num_Inputs){
@@ -164,7 +170,7 @@ void Parse_Input(int ***Logic_Map, int ***Inputs, int *Num_Nodes, int *Num_Edges
     
     //  分配記憶體來放邏輯圖
     for(int i=0; i<*Num_Edges; i++){
-        *(*Logic_Map+i) = (int *)malloc(sizeof(int) * 4);
+        *(*Logic_Map+i) = (int *)malloc(sizeof(int) * 5);
     }
     //  把input吃進來放進Logic_Map裡面，記得第一個column的值不要吃，沒意義。
     for(int i=0; i<*Num_Edges; i++){
@@ -175,15 +181,18 @@ void Parse_Input(int ***Logic_Map, int ***Inputs, int *Num_Nodes, int *Num_Edges
                 scanf("%d", &Dont_Care);
                 continue;
             }
-            //  第四個column代表weight
+            //  第四個column代表weight，第五個column代表現在這個路徑上的load
             if(j==4){
-                (*(*Logic_Map+i))[j] = 0;
-                printf("%d\n", (*(*Logic_Map+i))[j]);
+                (*(*Logic_Map+i))[j-1] = 0;
+                (*(*Logic_Map+i))[j] = (*(*Logic_Map+i))[2];
+                printf("%d %d\n", (*(*Logic_Map+i))[j-1], (*(*Logic_Map+i))[j]);
             }
-            else{
+            else if(j<5 && j>0){
                 scanf("%d", &(*(*Logic_Map+i))[j-1]);
                 printf("%d ", (*(*Logic_Map+i))[j-1]);
             }
+            else
+                continue;
         }
         /* printf("\n"); */
     }
@@ -215,7 +224,7 @@ void Parse_Input(int ***Logic_Map, int ***Inputs, int *Num_Nodes, int *Num_Edges
 int main() 
 { 
     int **Logic_Map, **Inputs, Num_Nodes, Num_Edges, Num_Inputs,
-        **Shortest_Path;
+        **Shortest_Path, *Hops;
 
     Parse_Input(&Logic_Map, &Inputs, &Num_Nodes, &Num_Edges, &Num_Inputs);
 
@@ -264,17 +273,272 @@ int main()
   
     //  找Shortest Path~~~~傳graph進去，最後會完成Shortest_Path
     Shortest_Path = (int **)malloc(sizeof(int *) * (Num_Nodes*Num_Nodes));
+    Hops = (int *)malloc(sizeof(int) * (Num_Nodes*Num_Nodes));
     for(int i=0; i<Num_Nodes; i++){
-        dijkstra(graph, i, Num_Nodes, &Shortest_Path); 
+        dijkstra(graph, i, Num_Nodes, &Shortest_Path, Hops); 
     }
 
     //  印出很騷的Shortest Path
-    printf("Num_Nodes^2 = %d\n", Num_Nodes*Num_Nodes);
-    for(int i=0; i<Num_Nodes*Num_Nodes; i++){
+    /* printf("Num_Nodes^2 = %d\n", Num_Nodes*Num_Nodes); */
+    /* for(int i=0; i<Num_Nodes*Num_Nodes; i++){ */
+    /*     for(int j=0; j<Num_Nodes; j++){ */
+    /*         printf("%d ", (*(Shortest_Path+i))[j]); */
+    /*     } */
+    /*     printf("\n"); */
+    /* } */
+
+    //  印出每一條shortest path的hop數。
+    /* for(int i=0; i<Num_Nodes*Num_Nodes; i++){ */
+    /*     printf("%d ", Hops[i]); */
+    /* } */
+    /* printf("\n"); */
+
+    //  印出有點小騷的Inputs，檢查用。
+    /* for(int i=0; i<Num_Inputs; i++){ */
+    /*     printf("%d %d %d\n", (*(Inputs+i))[0], (*(Inputs+i))[1], (*(Inputs+i))[2]); */
+    /* } */
+
+    int Two_Segment[Num_Nodes*Num_Inputs][Num_Nodes];
+    //  初始化。
+    for(int i=0; i<Num_Nodes; i++){
         for(int j=0; j<Num_Nodes; j++){
-            printf("%d ", (*(Shortest_Path+i))[j]);
+            Two_Segment[i][j] = 0;
         }
-        printf("\n");
     }
+
+    //  src是input的起點，middle_state是中間要經過的點（2-segment），dst是
+    //  input裡面的終點。
+    int src, middle_state, dst;     
+    int Two_Segment_Row=0, Input=0;
+    for(int i=0; i<Num_Inputs; i++){
+        Input = i;
+        //  下面這個for就是在檢查進來的這一條input可不可以吃。
+        //  Step 1:
+        //          第一步先把shortest path找出來（2-segment routing）。
+        //  Step 2:
+        //          在這些shortest path當中，算出每一條的weight，如果這一條
+        //          shortest path中，有weight數是無限大（INT_MAX），這條路
+        //          就不能用了，直接算下一個。
+        //  Step 3:
+        //          再用一個for迴圈，去檢查這些weight數，有沒有哪些的weight數
+        //          是一樣的，如果沒有一樣，那就簡單，直接把這個最小的weight的
+        //          shortest path拿去用，若有一樣的weight的話，按照下面步驟。
+        //
+        //          step 3-1：
+        //                    把這些weight一樣的shortest path，去算總共的hop數
+        //                    hop數小的，就是他了，如果hop數又他媽一樣，就往下
+        //                    一個步驟走。
+        //          step 3-2：
+        //                    檢查這些hop數一樣的shortest path，從src開始進去
+        //                    走，看先遇到index小的節點的，就是這條了，不會再有
+        //                    其他情況了。
+        //  Step 4：
+        //          好，會走到這一步，代表現在已經有找到一條可以走的shortest path
+        //          了，到這邊，第一步要先檢查進來的這一條input，他的load數，是
+        //          不是我們選到的這條shortest path中每一條路徑的load都可以滿
+        //          足，如果有某一條路徑的load會爆掉，這條input就要直接reject
+        //          掉，如果每一條路徑的load都滿足了，就可以進到下一步。
+        //          
+        //  Step 5：
+        //          到這裡，現在這一條input就是可以接受的，把這一條input的load
+        //          算出每一個路徑的weight數，算完之後存回去Logic_Map中的第四
+        //          個column，然後把第五個column的load數，扣掉這條input的load
+        //          然後要小心weight數萬一有算出無限大的，就存成INT_MAX，我前
+        //          面在檢查weight的時候，就會去看看weight數有沒有是(INT_MAX)
+        //          ，有的話，這條shortest path就不能選了，因為weight爆掉。
+        //  Step 6：
+        //         weight跟load都更新完了之後，就把這一條shortest path擺進一個
+        //         Outputs裡面，然後要記得算出總共接受了幾個input，啊然後那個
+        //         middle_state不用放進去，第一個column放index，第二個放src，
+        //         第三個放dst，第四個放該input的load。
+
+
+        //  把Two_segment做初始化，不然會有問題。
+        for(int i=0; i<Num_Nodes*Num_Inputs; i++){
+            for(int j=0; j<Num_Nodes; j++){
+                Two_Segment[i][j] = -1;
+            }
+        }
+        for(int j=0; j<Num_Nodes; j++){
+            src = (*(Inputs+i))[0];
+            middle_state = j;
+            dst = (*(Inputs+i))[1];
+            printf("src=%d middle=%d dst=%d\n", src, middle_state, dst);
+            //  Step 1
+            int cnt=0;
+            int Two_Segment_Cnt=0;
+            while(cnt < 2){
+                if(cnt == 0){
+                    for(int k=0; k<Num_Nodes*Num_Nodes; k++){
+                        if((*(Shortest_Path+k))[0] == src){
+                            int m=0;
+                            while((*(Shortest_Path+k+middle_state))[m] != -1){
+                                Two_Segment[j][Two_Segment_Cnt] = (*(Shortest_Path+k+middle_state))[m];
+                                /* printf("%d ", (*(Shortest_Path+k+middle_state))[m]); */
+                                /* printf("%d ", Two_Segment[j][Two_Segment_Cnt]); */
+                                m++;
+                                Two_Segment_Cnt++;
+                            }
+                            break;
+                        }
+                    }
+                    cnt++;
+                }
+                else{
+                    for(int k=0; k<Num_Nodes*Num_Nodes; k++){
+                        if((*(Shortest_Path+k))[0] == middle_state){
+                            int m=0;
+                            while((*(Shortest_Path+k+dst))[m] != -1){
+                                if(m==0){
+                                    m++;
+                                    continue;
+                                }
+                                Two_Segment[j][Two_Segment_Cnt] = (*(Shortest_Path+k+dst))[m];
+                                /* printf("%d ", Two_Segment[j][Two_Segment_Cnt]); */
+                                m++;
+                                Two_Segment_Cnt++;
+                            }
+                            break;
+                        }
+                    }
+                    cnt++;
+                }
+            }
+            /* printf("\n"); */
+        }
+        //  印出這個input的所有shortest path
+        for(int k=0; k<Num_Nodes; k++){
+            for(int n=0; n<Num_Nodes; n++){
+                printf("%d ", Two_Segment[k][n]);
+            }
+            printf("\n");
+        }
+        //  Step 2
+        //  Logic Map的排列：
+        //  0     1      2           3         4
+        //  src   dst    capacity    weight    load
+        /* printf("%d\n", Input); */
+        /* sleep(5); */
+        int Weights[Num_Nodes];
+        for(int i=0; i<Num_Nodes; i++)
+            Weights[i] = -1;
+
+        int cnt=0;
+        for(int row=0; row<Num_Nodes; row++){
+            //  要-1，因為有可能剛好從頭走到尾，如果從頭走到尾，可能會越界。
+            int Weight=0;
+            for(int col=0; col<Num_Nodes-1; col++){
+                //  一個路徑一個路徑回去算weight
+                if(Two_Segment[row][col+1] != -1){
+                    int src, dst, i;
+                    for(i=0; i<Num_Edges; i++){
+                        src = Two_Segment[row][col];
+                        dst = Two_Segment[row][col+1];
+                        /* printf("src = %d dst = %d map0 = %d map1 = %d i = %d\n", src, dst, (*(Logic_Map+i))[0], (*(Logic_Map+i))[1], i); */
+                        if((*(Logic_Map+i))[0] == src && (*(Logic_Map+i))[1] == dst){
+                            //  先檢查這個路徑的weight是不是已經爆了，爆了就不
+                            //  用找這條了，直接continue找下一條。
+                            if((*(Logic_Map+i))[3] == INT_MAX){
+                                Weight = INT_MAX;
+                                break;
+                            }
+                            else{
+                                /* printf("src = %d dst = %d\n", src, dst); */
+                                Weight += (*(Logic_Map+i))[3];
+                                continue;
+                            }
+                        }
+                        //  不一定會是正向的，有可能會反過來，這樣也要算。
+                        else if((*(Logic_Map+i))[0] == dst && (*(Logic_Map+i))[1] == src){
+                            if((*(Logic_Map+i))[3] == INT_MAX){
+                                Weight = INT_MAX;
+                                break;
+                            }
+                            else{
+                                /* printf("src = %d dst = %d\n", src, dst); */
+                                Weight += (*(Logic_Map+i))[3];
+                                continue;
+                            }
+                        }
+                        else
+                            continue;
+                    }
+                    if(i == Num_Edges){
+                        continue;
+                    }
+                    //  weight爆了，找下一條。
+                    else if((*(Logic_Map+i))[3] == INT_MAX){
+                        break;
+                    }
+                    else
+                        continue;
+
+                    /* Weights[cnt++] = Weight; */
+                    /* printf("%d ", Weight); */
+                }
+                //  走到看見-1，代表走完了，繼續走下一個shortest path
+                else
+                    break;
+            }
+                /* printf("\n"); */
+            Weights[cnt++] = Weight;
+            /* printf("Weight = %d Input = %d cnt = %d\n", Weight, Input, cnt); */
+        }
+        //  印出擺進來的weight陣列，檢查是不是對的。
+        /* for(int z=0; z<cnt; z++){ */
+        /*     printf("%d ", Weights[z]); */
+        /* } */
+        /* printf("\n"); */
+        /* sleep(5); */
+
+
+        //  Step 3
+        int Min = Weights[0], Min_Cnt=0, Choosen_Shortest_Path[Num_Nodes]
+            , **Same_Weight_Shortest_Paths;
+        for(int i=0; i<cnt; i++){
+            if(Weights[i] < Min){
+                Min = Weights[i];
+                Min_Cnt++;
+            }
+            else if(Weights[i] == Min && i != 0){
+                Min_Cnt++;
+            }
+            else
+                continue;
+        }
+        
+        //  Min_Cnt是0代表只有個路徑weight是最小的，再用一個for進去裡面找，看
+        //  是哪一條shortest path，把這條shortest path的index記下來，往下繼續
+        //  做。
+        /* printf("================\n"); */
+        /* printf("Min_Cnt = %d\n", Min_Cnt); */
+        if(Min_Cnt == 0){
+            for(int i=0; i<cnt; i++){
+                if(Weights[i] == Min){
+                    for(int j=0; j<Num_Nodes; j++){
+                        Choosen_Shortest_Path[j] = Two_Segment[i][j];
+                        printf("%d ", Choosen_Shortest_Path[j]);
+                    }
+                    printf("\n");
+                    break;
+                }
+            }
+        }
+        /* printf("================\n"); */
+        /* sleep(5); */
+        //  Min_Cnt不是0代表有多個weight一樣的shortest path，這樣就必須得先進
+        //  去把這些是最小且重複weight的shortest path找出來，先把這些shortest
+        //  path放進一個叫做Same_Weight_Shortest_Paths裡面。
+        else{
+            //  Step 3-1
+            //  Step 3-2
+            continue;
+        }
+
+    }
+
+
+
+
     return 0; 
 } 
