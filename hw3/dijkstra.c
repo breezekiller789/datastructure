@@ -310,6 +310,10 @@ int main()
     //  input裡面的終點。
     int src, middle_state, dst;     
     int Two_Segment_Row=0, Input=0;
+    float Update_Weights[Num_Edges];
+    for(int i=0; i<Num_Edges; i++){
+        Update_Weights[i] = 0;
+    }
     for(int i=0; i<Num_Inputs; i++){
         Input = i;
         //  下面這個for就是在檢查進來的這一條input可不可以吃。
@@ -438,25 +442,25 @@ int main()
                         if((*(Logic_Map+i))[0] == src && (*(Logic_Map+i))[1] == dst){
                             //  先檢查這個路徑的weight是不是已經爆了，爆了就不
                             //  用找這條了，直接continue找下一條。
-                            if((*(Logic_Map+i))[3] == INT_MAX){
+                            if(Update_Weights[i] == INT_MAX){
                                 Weight = INT_MAX;
                                 break;
                             }
                             else{
                                 /* printf("src = %d dst = %d\n", src, dst); */
-                                Weight += (*(Logic_Map+i))[3];
+                                Weight += Update_Weights[i];
                                 continue;
                             }
                         }
                         //  不一定會是正向的，有可能會反過來，這樣也要算。
                         else if((*(Logic_Map+i))[0] == dst && (*(Logic_Map+i))[1] == src){
-                            if((*(Logic_Map+i))[3] == INT_MAX){
+                            if(Update_Weights[i] == INT_MAX){
                                 Weight = INT_MAX;
                                 break;
                             }
                             else{
                                 /* printf("src = %d dst = %d\n", src, dst); */
-                                Weight += (*(Logic_Map+i))[3];
+                                Weight += Update_Weights[i];
                                 continue;
                             }
                         }
@@ -467,7 +471,7 @@ int main()
                         continue;
                     }
                     //  weight爆了，找下一條。
-                    else if((*(Logic_Map+i))[3] == INT_MAX){
+                    else if(Update_Weights[i] == INT_MAX){
                         break;
                     }
                     else
@@ -482,6 +486,7 @@ int main()
             }
                 /* printf("\n"); */
             Weights[cnt++] = Weight;
+            /* printf("cnt = %d\n", cnt); */
             /* printf("Weight = %d Input = %d cnt = %d\n", Weight, Input, cnt); */
         }
         //  印出擺進來的weight陣列，檢查是不是對的。
@@ -493,8 +498,7 @@ int main()
 
 
         //  Step 3
-        int Min = Weights[0], Min_Cnt=0, Choosen_Shortest_Path[Num_Nodes]
-            , **Same_Weight_Shortest_Paths;
+        int Min = Weights[0], Min_Cnt=0, Choosen_Shortest_Path[Num_Nodes];
         for(int i=0; i<cnt; i++){
             if(Weights[i] < Min){
                 Min = Weights[i];
@@ -506,12 +510,17 @@ int main()
             else
                 continue;
         }
+        //  印出Hops
+        /* for(int i=0; i<Num_Nodes*Num_Nodes; i++) */
+        /*     printf("%d ", Hops[i]); */
+        /* printf("\n"); */
         
         //  Min_Cnt是0代表只有個路徑weight是最小的，再用一個for進去裡面找，看
         //  是哪一條shortest path，把這條shortest path的index記下來，往下繼續
         //  做。
         /* printf("================\n"); */
         /* printf("Min_Cnt = %d\n", Min_Cnt); */
+        int Same_Weight_Shortest_Paths[Num_Nodes][Num_Nodes];
         if(Min_Cnt == 0){
             for(int i=0; i<cnt; i++){
                 if(Weights[i] == Min){
@@ -528,10 +537,234 @@ int main()
         /* sleep(5); */
         //  Min_Cnt不是0代表有多個weight一樣的shortest path，這樣就必須得先進
         //  去把這些是最小且重複weight的shortest path找出來，先把這些shortest
-        //  path放進一個叫做Same_Weight_Shortest_Paths裡面。
+        //  path放進一個叫做Same_Weight_Shortest_Paths裡面，全部搞完記得把他
+        //  清乾淨。
         else{
+            //  Same_Weight_Shortest_Paths, Hop_Cnts 初始化
+            for(int i=0; i<Num_Nodes; i++){
+                for(int j=0; j<Num_Nodes; j++){
+                    Same_Weight_Shortest_Paths[i][j] = -1;
+                }
+            }
             //  Step 3-1
+            //  先進去Two_Segment裡面走一次，把這些Weight一樣的找出來。
+            int idx=0;  //  來算總共有幾條路徑weight一樣，待會可以用。
+            /* printf("==========\n"); */
+            for(int i=0; i<Num_Nodes; i++){
+                if(Weights[i] == Min){
+                    for(int j=0; j<Num_Nodes; j++){
+                        Same_Weight_Shortest_Paths[idx][j] = Two_Segment[i][j];
+                        /* printf("%d ", Same_Weight_Shortest_Paths[idx][j]); */
+                    }
+                    /* printf("\n"); */
+                    idx++;
+                }
+            }
+            //  然後再把這些挑出來的shortest path，去算出每一個的hop數。
+            int Hop_Cnts[idx];
+            for(int i=0; i<idx; i++){
+                int sum=0;
+                for(int j=0; j<Num_Nodes-1; j++){
+                    //  碰到-1代表這shortest path走完了。
+                    if(Two_Segment[i][j+1] == -1){
+                        break;
+                    }
+                    int src, dst, index;            //  因為我的Hop是用一個一 
+                    src = Two_Segment[i][j];        //  元陣列放的，必須要把前
+                    dst = Two_Segment[i][j+1];      //  面那個element * 7再加 
+                    index = src * Num_Nodes + dst;  //  上後面的才會是剛好那個
+                                                    //  路徑的hop值。         
+                    sum += Hops[index];
+                }
+                printf("hop[%d] = %d\n", i, sum);
+                Hop_Cnts[i] = sum;
+            }
+            int Min_Hop = Hop_Cnts[0], Min_Hop_Cnt=0;
+            //  找出最小的Hop數
+            for(int i=0; i<idx; i++){
+                if(Hop_Cnts[i] < Min_Hop){
+                    Min_Hop = Hop_Cnts[i];
+                }
+            }
+            //  回去算出有沒有重複的Hop數的。
+            for(int i=0; i<idx; i++){
+                if(Hop_Cnts[i] == Min_Hop){
+                    Min_Hop_Cnt++;
+                }
+            }
+            /* printf("Min_Hop = %d\n", Min_Hop); */
+            /* printf("Min_Hop_Cnt = %d\n", Min_Hop_Cnt); */
+
+            //  Min_Hop_Cnt是零，太好了，就進去Same_Weight_Shortest_Paths裡面
+            //  把hop數是Min_Hop的那個shortest path，擺進Choosen_Shortest_Path
+            int Same_Hop_Shortest_Paths[Min_Hop_Cnt][Num_Nodes];
+            if(Min_Hop_Cnt == 0){
+                for(int i=0; i<idx; i++){
+                    if(Hop_Cnts[i] == Min_Hop){
+                        for(int j=0; j<Num_Nodes; j++){
+                            Choosen_Shortest_Path[j] = Same_Weight_Shortest_Paths[i][j];
+                            /* printf("%d ", Choosen_Shortest_Path[j]); */
+                        }
+                        /* printf("\n"); */
+                    }
+                }
+            }
             //  Step 3-2
+            //  他馬的，這樣就要再進去比index，把這些Hop一樣的Same_Weight_Shortest_Paths
+            //  ，把hop數是Min_Hop的這些路徑，擺進Same_Hop_Shortest_Paths裡面。
+            //  然後再進去這裡面，從頭開始往後比，只要比到一個最小index的那條
+            //  就把這條shortest path放進Choosen_Shortest_Path裡面。
+            else{
+                int Same_Hop_Cnt = 0;
+                for(int i=0; i<idx; i++){
+                    if(Hop_Cnts[i] == Min_Hop){
+                        for(int j=0; j<Num_Nodes; j++){
+                            Same_Hop_Shortest_Paths[Same_Hop_Cnt][j] = Same_Weight_Shortest_Paths[i][j];
+                            /* printf("%d ", Same_Hop_Shortest_Paths[Same_Hop_Cnt][j]); */
+                        }
+                        /* printf("\n"); */
+                        Same_Hop_Cnt++;
+                    }
+                }
+                /* printf("Same_Hop_Cnt = %d\n", Same_Hop_Cnt); */
+                //  回去找index小的那個，i, j都從一開始是因為自己跟自己比沒有意義。
+                int Min_Index = -1, i;
+                for(i=1; i<Num_Nodes; i++){
+                    int index = Same_Hop_Shortest_Paths[0][i], j;
+                    for(j=1; j<Same_Hop_Cnt; j++){
+                        if(Same_Hop_Shortest_Paths[j][i] < index){
+                            Min_Index = index;
+                        }
+                    }
+                    /* printf("j = %d Same_Hop_Cnt = %d\n", j, Same_Hop_Cnt); */
+                    //  Min_Index還是-1的話代表這個column的index都一樣。
+                    if(Min_Index == -1){
+                        continue;
+                    }
+                    //  會進這個else就代表已經有開始不一樣了，而且有一個最小的
+                    //  再回去這個column裡面找，看是哪一條路，把它放進shortest path
+                    else{
+                        for(int j=1; j<Same_Hop_Cnt; j++){
+                            if(Same_Hop_Shortest_Paths[j][i] == Min_Index){
+                                for(int k=0; k<Num_Nodes; k++){
+                                    Choosen_Shortest_Path[k] = Same_Hop_Shortest_Paths[j][k];
+                                    printf("%d ", Choosen_Shortest_Path[k]);
+                                }
+                                printf("\n");
+                            }
+                        }
+                        break;
+                    }
+                }
+                //  會進來這個if，代表今天hop一樣的所有路徑，都長得一模一樣，
+                //  所以就挑第一條就好。
+                if(i == Num_Nodes){
+                    for(int k=0; k<Num_Nodes; k++){
+                        Choosen_Shortest_Path[k] = Same_Hop_Shortest_Paths[0][k];
+                        printf("%d ", Choosen_Shortest_Path[k]);
+                    }
+                    printf("\n");
+                }
+            }
+
+            //  Step 4 
+            //  Choosen_Shortest_Path中的每一段路徑，都要回去Logic_Map裡面找，
+            //  看看有沒有load是沒辦法承受的。
+            int load = (*(Inputs+i))[2], reject = -1;
+            /* printf("load = %d\n", load); */
+            for(int i=0; i<Num_Nodes; i++){
+                int j, src, dst;
+                src = Choosen_Shortest_Path[i];
+                dst = Choosen_Shortest_Path[i+1];
+                //  走到-1代表走完了，跳出去。
+                if(dst == -1){
+                    break;
+                }
+                for(j=0; j<Num_Edges; j++){
+                    /* printf("src = %d dst = %d 0 = %d 1 = %d\n", src, dst, (*(Logic_Map+j))[0], (*(Logic_Map+j))[1]); */
+                    //  走到-1代表Choosen_Shortest_Path走完了，這個input可以吃
+                    if((*(Logic_Map+j))[0] == src && (*(Logic_Map+j))[1] == dst){
+                        //  會進去這裡，就代表這個要直接reject掉。
+                        if(load > (*(Logic_Map+j))[4]){
+                            reject = 1;
+                        }
+                        else
+                            continue;
+                    }
+                    else if((*(Logic_Map+j))[0] == dst && (*(Logic_Map+j))[1] == src){
+                        //  會進去這裡，就代表這個要直接reject掉。
+                        if(load > (*(Logic_Map+j))[4]){
+                            reject = 1;
+                        }
+                        else
+                            continue;
+                    }
+                    else
+                        continue;
+                }
+                if(reject == 1){
+                    break;
+                }
+            }
+            printf("reject = %d, load = %d\n", reject, load);
+            //  這條要reject，continue，繼續看下一條input
+            if(reject == 1){
+                continue;
+            }
+
+            //  Step 5
+            /* printf("load = %d\n", load); */
+            for(int i=0; i<Num_Nodes; i++){
+                int src, dst;
+                src = Choosen_Shortest_Path[i];
+                dst = Choosen_Shortest_Path[i+1];
+                //  走到-1代表走完了，跳出去。
+                if(dst == -1){
+                    break;
+                }
+                for(int j=0; j<Num_Edges; j++){
+                    /* printf("src = %d dst = %d 0 = %d 1 = %d\n", src, dst, (*(Logic_Map+j))[0], (*(Logic_Map+j))[1]); */
+                    //  走到-1代表Choosen_Shortest_Path走完了，這個input可以吃
+                    if((*(Logic_Map+j))[0] == src && (*(Logic_Map+j))[1] == dst){
+                        //  weight爆掉。
+                        if(((*(Logic_Map+j))[2] - load) == 0){
+                            Update_Weights[j] = INT_MAX;
+                            continue;
+                        }
+                        int capacity;
+                        float weight=0;
+                        capacity = (*(Logic_Map+j))[2] - load;
+                        weight = (float)load / ((*(Logic_Map+j))[2] - load);
+                        printf("weight = %f\n", weight);
+                        Update_Weights[j] += weight;
+                    }
+                    else if((*(Logic_Map+j))[0] == dst && (*(Logic_Map+j))[1] == src){
+                        //  weight爆掉。
+                        if(((*(Logic_Map+j))[2] - load) == 0){
+                            Update_Weights[j] = INT_MAX;
+                            continue;
+                        }
+                        int capacity;
+                        float weight=0;
+                        capacity = (*(Logic_Map+j))[2] - load;
+                        weight = (float)load / ((*(Logic_Map+j))[2] - load);
+                        printf("weight = %f\n", weight);
+                        Update_Weights[j] += weight;
+                    }
+                    else
+                        continue;
+                }
+                //  TODO 更新load數。
+            }
+            for(int i=0; i<Num_Edges; i++){
+                printf("%f ", Update_Weights[i]);
+            }
+            printf("\n");
+
+
+
+
+
             continue;
         }
 
