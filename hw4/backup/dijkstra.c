@@ -19,18 +19,19 @@
 // value, from the set of vertices 
 // not yet included in shortest 
 // path tree 
-int minDistance(int dist[], int sptSet[], int Num_Nodes) 
+int minDistance(int dist[],  
+                int sptSet[]) 
 { 
       
     // Initialize min value 
     int min = INT_MAX, min_index; 
   
-    for (int v = 0; v < Num_Nodes; v++){
+    for (int v = 0; v < V; v++){
         if (sptSet[v] == -1 && dist[v] < min) 
             min = dist[v];
             /* min = dist[v], min_index = v; */ 
     }
-    for (int v = 0; v<Num_Nodes; v++){
+    for (int v = 0; v<V; v++){
         if(sptSet[v] == -1 && dist[v] == min)
             /* min_index = v; */
             return v;
@@ -125,7 +126,7 @@ void dijkstra(int **graph, int src, int Num_Nodes, int ***Shortest_Path
         // vertices not yet processed.  
         // u is always equal to src 
         // in first iteration. 
-        int u = minDistance(dist, sptSet, Num_Nodes); 
+        int u = minDistance(dist, sptSet); 
   
         // Mark the picked vertex  
         // as processed 
@@ -240,7 +241,7 @@ int main()
     //  這裡有點小嗨，Logic_Map裡面的第一個element是Src，第二個是Dst，意思是說
     //  這兩個節點之間有鏈結，長度就直接給1，會這樣做是因為我後面在兜shortest
     //  path的時候，會用這個graph去兜，參考下面的那個，那是一個demo
-    for(int i=0; i<Num_Nodes; i++){
+    for(int i=0; i<Num_Edges; i++){
         /* printf("%d %d\n", (*(Logic_Map+i))[0], (*(Logic_Map+i))[1]); */
         graph[(*(Logic_Map+i))[0]][(*(Logic_Map+i))[1]] = 1;
         graph[(*(Logic_Map+i))[1]][(*(Logic_Map+i))[0]] = 1;
